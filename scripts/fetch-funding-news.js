@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'url';
 import Parser from 'rss-parser';
 import { supabase } from '../lib/supabase.js';
 import { sources, fundingKeywords } from './sources.js';
@@ -100,7 +101,7 @@ export async function runAllSources() {
 }
 
 // allow running directly with: node scripts/fetch-funding-news.js
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   runAllSources().then(() => {
     console.log('Done');
     process.exit(0);
