@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Uses the anon key here since this runs client-side. Set row-level security
-// in Supabase to make funding_rounds/companies read-only for anon.
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -14,26 +12,32 @@ export default function Home() {
   const [rounds, setRounds] = useState([]);
   const [region, setRegion] = useState('saudi');
   const [loading, setLoading] = useState(true);
+  const [aiOnly, setAiOnly] = useState(false);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const { data } = await supabase
+      let query = supabase
         .from('funding_rounds')
         .select('*, companies(name, sector)')
         .eq('region', region)
         .order('announced_date', { ascending: false })
         .limit(50);
+
+      if (aiOnly) query = query.eq('is_ai_saas', true);
+
+      const { data } = await query;
       setRounds(data || []);
       setLoading(false);
     }
     load();
-  }, [region]);
+  }, [region, aiOnly]);
 
   return (
     <div style={{ fontFamily: 'system-ui', maxWidth: 900, margin: '40px auto', padding: '0 20px' }}>
       <h1>Funding Tracker</h1>
-      <div style={{ marginBottom: 20 }}>
+
+      <div style={{ marginBottom: 12 }}>
         {regions.map((r) => (
           <button
             key={r}
@@ -53,36 +57,60 @@ export default function Home() {
         ))}
       </div>
 
+      <label style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20 }}>
+        <input type="checkbox" checked={aiOnly} onChange={(e) => setAiOnly(e.target.checked)} />
+        AI / SaaS only
+      </label>
+
       {loading && <p>Loading...</p>}
+      {!loading && rounds.length === 0 && <p>No data yet, or nothing enriched for this filter.</p>}
 
-      {!loading && rounds.length === 0 && <p>No data yet. Run the scraper first.</p>}
-
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ textAlign: 'left', borderBottom: '2px solid #eee' }}>
-            <th style={{ padding: 8 }}>Company</th>
-            <th style={{ padding: 8 }}>Amount</th>
-            <th style={{ padding: 8 }}>Date</th>
-            <th style={{ padding: 8 }}>Source</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rounds.map((r) => (
-            <tr key={r.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-              <td style={{ padding: 8 }}>{r.companies?.name}</td>
-              <td style={{ padding: 8 }}>
+      <div>
+        {rounds.map((r) => (
+          <div key={r.id} style={{ borderBottom: '1px solid #eee', padding: '16px 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <h3 style={{ margin: 0 }}>{r.companies?.name}</h3>
+              <span style={{ fontWeight: 600 }}>
                 {r.amount_usd ? `$${(r.amount_usd / 1_000_000).toFixed(1)}M` : '-'}
-              </td>
-              <td style={{ padding: 8 }}>{r.announced_date}</td>
-              <td style={{ padding: 8 }}>
-                <a href={r.source_url} target="_blank" rel="noreferrer">
-                  {r.source_name}
-                </a>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </span>
+            </div>
+
+            <div style={{ fontSize: 13, color: '#666', margin: '4px 0' }}>
+              {r.sector && <span style={{ marginRight: 10 }}>Sector: {r.sector}</span>}
+              {r.funding_stage && r.funding_stage !== 'not specified' && (
+                <span style={{ marginRight: 10 }}>Stage: {r.funding_stage}</span>
+              )}
+              {r.is_ai_saas && (
+                <span style={{ background: '#eef', padding: '2px 8px', borderRadius: 10, fontSize: 12 }}>
+                  AI/SaaS
+                </span>
+              )}
+            </div>
+
+            {r.summary && r.summary !== 'Not enough information in snippet.' && (
+              <p style={{ margin: '6px 0', fontSize: 14 }}>{r.summary}</p>
+            )}
+
+            {r.extracted_investors && r.extracted_investors !== 'not mentioned' && (
+              <p style={{ margin: '2px 0', fontSize: 13, color: '#555' }}>
+                Investors: {r.extracted_investors}
+              </p>
+            )}
+
+            {r.tech_notes && r.tech_notes !== 'none mentioned' && (
+              <p style={{ margin: '2px 0', fontSize: 13, color: '#555' }}>Tech: {r.tech_notes}</p>
+            )}
+
+            <div style={{ fontSize: 12, marginTop: 6 }}>
+              <a href={r.source_url} target="_blank" rel="noreferrer">{r.source_name}</a>
+              {' · '}{r.announced_date}
+              {r.enrichment_status === 'pending' && (
+                <span style={{ color: '#999' }}> · not yet enriched</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
