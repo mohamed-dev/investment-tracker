@@ -37,3 +37,13 @@ create table if not exists ingestion_log (
 create index if not exists idx_funding_region on funding_rounds(region);
 create index if not exists idx_funding_date on funding_rounds(announced_date desc);
 create index if not exists idx_company_name on companies(name);
+
+-- AI enrichment columns, added for scripts/enrich-funding-data.js
+alter table funding_rounds add column if not exists content_snippet text;
+alter table funding_rounds add column if not exists enrichment_status text default 'pending';
+alter table funding_rounds add column if not exists summary text;
+alter table funding_rounds add column if not exists sector text;
+alter table funding_rounds add column if not exists is_ai_saas boolean;
+alter table funding_rounds add column if not exists extracted_investors text;
+alter table funding_rounds add column if not exists funding_stage text;
+alter table funding_rounds add column if not exists tech_notes text;

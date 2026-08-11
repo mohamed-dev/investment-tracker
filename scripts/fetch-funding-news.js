@@ -75,6 +75,8 @@ async function runForSource(source) {
         source_name: source.name,
         raw_headline: item.title,
         region: source.region,
+        content_snippet: item.contentSnippet || item.content || null,
+        enrichment_status: 'pending',
       });
 
       if (!error) inserted += 1;

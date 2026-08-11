@@ -1,4 +1,5 @@
 import { runAllSources } from '../../scripts/fetch-funding-news.js';
+import { runEnrichment } from '../../scripts/enrich-funding-data.js';
 
 // Vercel Cron hits this endpoint on the schedule set in vercel.json.
 // Protect it with a secret so randoms can't trigger your scrape job.
@@ -11,6 +12,7 @@ export default async function handler(req, res) {
 
   try {
     await runAllSources();
+    await runEnrichment();
     res.status(200).json({ status: 'ok' });
   } catch (err) {
     res.status(500).json({ error: err.message });
