@@ -5,6 +5,10 @@ import { sources, fundingKeywords } from './sources.js';
 
 const parser = new Parser();
 
+function stripHtml(text) {
+  return text ? text.replace(/<[^>]*>/g, '') : text;
+}
+
 function looksLikeFunding(text) {
   const lower = text.toLowerCase();
   return fundingKeywords.some((kw) => lower.includes(kw));
@@ -43,10 +47,10 @@ async function runForSource(source) {
     fetched = feed.items.length;
 
     for (const item of feed.items) {
-      const text = `${item.title} ${item.contentSnippet || ''}`;
+      const text = `${stripHtml(item.title)} ${item.contentSnippet || ''}`;
       if (!looksLikeFunding(text)) continue;
 
-      const companyName = guessCompanyName(item.title);
+      const companyName = guessCompanyName(stripHtml(item.title));
       const amount = guessAmount(text);
 
       // upsert company
@@ -73,7 +77,7 @@ async function runForSource(source) {
         announced_date: item.pubDate ? new Date(item.pubDate) : new Date(),
         source_url: item.link,
         source_name: source.name,
-        raw_headline: item.title,
+        raw_headline: stripHtml(item.title),
         region: source.region,
         content_snippet: item.contentSnippet || item.content || null,
         enrichment_status: 'pending',

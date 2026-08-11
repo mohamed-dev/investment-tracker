@@ -3,8 +3,12 @@ import { supabase } from '../lib/supabase.js';
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = 'claude-haiku-4-5-20251001';
 
+function stripHtml(text) {
+  return text ? text.replace(/<[^>]*>/g, '') : text;
+}
+
 async function classifyRound(row) {
-  const text = `Headline: ${row.raw_headline}\n\nSnippet: ${row.content_snippet || 'none available'}`;
+  const text = `Headline: ${stripHtml(row.raw_headline)}\n\nSnippet: ${row.content_snippet || 'none available'}`;
 
   const prompt = `You're extracting structured data from a startup funding news item for an investment tracker. Based ONLY on the text given, extract:
 
