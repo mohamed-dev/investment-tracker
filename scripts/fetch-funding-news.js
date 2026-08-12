@@ -18,7 +18,7 @@ function looksLikeFunding(text) {
 // you review/clean in the dashboard rather than trying to parse perfectly here.
 function guessCompanyName(headline) {
   // most funding headlines start with "CompanyName raises $X million..."
-  const match = headline.match(/^([A-Z][\w.& ]{1,40}?)\s+(raises|secures|closes|lands)/i);
+  const match = headline.match(/^([A-Z][\w.& ]{1,40}?)\s+(raises|secures|closes|lands|launches|unveils|announces|nets|wins)/i);
   return match ? match[1].trim() : headline.slice(0, 60);
 }
 

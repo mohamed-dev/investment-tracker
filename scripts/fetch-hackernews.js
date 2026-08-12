@@ -22,7 +22,7 @@ function stripHtml(text) {
 
 // most funding headlines start with "CompanyName raises $X million..."
 function guessCompanyName(title) {
-  const match = title.match(/^([A-Z][\w.& ]{1,40}?)\s+(raises|secures|closes|lands)/i);
+  const match = title.match(/^([A-Z][\w.& ]{1,40}?)\s+(raises|secures|closes|lands|launches|unveils|announces|nets|wins)/i);
   return match ? match[1].trim() : title.slice(0, 60);
 }
 

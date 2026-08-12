@@ -43,12 +43,14 @@ async function classifyRound(row) {
 - funding_stage: seed, pre-seed, series a, series b, series c, growth, or "not specified"
 - tech_notes: any technical/product detail mentioned, e.g. platform type, integrations, what they built, or "none mentioned"
 - is_relevant: true if this represents an actual startup, product launch, or funding event relevant to market/competitive tracking, false if it's a hobby project, personal tool, art project, or unrelated noise
+- is_notable_story: true if this is a particularly interesting, unusual, or notable story worth remembering beyond just being a funding number (e.g. notable founder background, unusual pivot, huge valuation jump, controversial angle, first-of-its-kind in the region), false otherwise
+- story_reason: one sentence on why, or null
 
 Headline: ${stripHtml(row.raw_headline)}
 
 Article text: ${contextText}
 
-Respond ONLY with a JSON object with these exact keys: summary, sector, is_ai_saas, investors, funding_stage, tech_notes, is_relevant. No markdown, no explanation.`;
+Respond ONLY with a JSON object with these exact keys: summary, sector, is_ai_saas, investors, funding_stage, tech_notes, is_relevant, is_notable_story, story_reason. No markdown, no explanation.`;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -109,6 +111,8 @@ export async function runEnrichment({ reprocessAll = false } = {}) {
           funding_stage: result.funding_stage,
           tech_notes: result.tech_notes,
           is_relevant: result.is_relevant,
+          is_notable_story: result.is_notable_story,
+          story_reason: result.story_reason,
           enrichment_status: 'processed',
         })
         .eq('id', row.id);
