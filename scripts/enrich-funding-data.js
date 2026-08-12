@@ -42,12 +42,13 @@ async function classifyRound(row) {
 - investors: comma separated list of investor/fund names mentioned, or "not mentioned"
 - funding_stage: seed, pre-seed, series a, series b, series c, growth, or "not specified"
 - tech_notes: any technical/product detail mentioned, e.g. platform type, integrations, what they built, or "none mentioned"
+- is_relevant: true if this represents an actual startup, product launch, or funding event relevant to market/competitive tracking, false if it's a hobby project, personal tool, art project, or unrelated noise
 
 Headline: ${stripHtml(row.raw_headline)}
 
 Article text: ${contextText}
 
-Respond ONLY with a JSON object with these exact keys: summary, sector, is_ai_saas, investors, funding_stage, tech_notes. No markdown, no explanation.`;
+Respond ONLY with a JSON object with these exact keys: summary, sector, is_ai_saas, investors, funding_stage, tech_notes, is_relevant. No markdown, no explanation.`;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -82,7 +83,9 @@ export async function runEnrichment({ reprocessAll = false } = {}) {
     query = query.eq('enrichment_status', 'pending');
   }
 
-  const { data: rows, error } = await query.limit(30);
+  const { data: rows, error } = await query
+    .order('created_at', { ascending: true })
+    .limit(50);
 
   if (error) {
     console.error('Failed to fetch rows:', error.message);
@@ -105,6 +108,7 @@ export async function runEnrichment({ reprocessAll = false } = {}) {
           extracted_investors: result.investors,
           funding_stage: result.funding_stage,
           tech_notes: result.tech_notes,
+          is_relevant: result.is_relevant,
           enrichment_status: 'processed',
         })
         .eq('id', row.id);

@@ -1,4 +1,6 @@
 import { runAllSources } from '../../scripts/fetch-funding-news.js';
+import { runProductHunt } from '../../scripts/fetch-producthunt.js';
+import { runHackerNews } from '../../scripts/fetch-hackernews.js';
 import { runEnrichment } from '../../scripts/enrich-funding-data.js';
 
 // Vercel Cron hits this endpoint on the schedule set in vercel.json.
@@ -12,6 +14,8 @@ export default async function handler(req, res) {
 
   try {
     await runAllSources();
+    await runProductHunt();
+    await runHackerNews();
     await runEnrichment();
     res.status(200).json({ status: 'ok' });
   } catch (err) {

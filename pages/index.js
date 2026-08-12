@@ -21,6 +21,7 @@ export default function Home() {
         .from('funding_rounds')
         .select('*, companies(name, sector)')
         .eq('region', region)
+        .or('is_relevant.eq.true,is_relevant.is.null')
         .order('announced_date', { ascending: false })
         .limit(50);
 
