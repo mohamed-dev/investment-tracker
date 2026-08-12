@@ -22,13 +22,28 @@ function guessCompanyName(headline) {
   return match ? match[1].trim() : headline.slice(0, 60);
 }
 
+const AMOUNT_PATTERN = /\$([\d,.]+)\s?(million|billion|M|B)/gi;
+const FUNDING_WORDS = /\b(raised|raises|funding|round|investment|secures|closes|lands|nets|wins)\b/i;
+const AMOUNT_PROXIMITY_CHARS = 40; // how close a funding word must be to the $ amount
+
 function guessAmount(text) {
-  const match = text.match(/\$([\d,.]+)\s?(million|billion|M|B)/i);
-  if (!match) return null;
-  let num = parseFloat(match[1].replace(/,/g, ''));
-  const unit = match[2].toLowerCase();
-  if (unit.startsWith('b')) num *= 1000;
-  return num * 1_000_000 === num ? num : num; // amount in millions, stored as-is
+  AMOUNT_PATTERN.lastIndex = 0;
+  let match;
+
+  while ((match = AMOUNT_PATTERN.exec(text)) !== null) {
+    const windowStart = Math.max(0, match.index - AMOUNT_PROXIMITY_CHARS);
+    const windowEnd = Math.min(text.length, match.index + match[0].length + AMOUNT_PROXIMITY_CHARS);
+    const nearbyText = text.slice(windowStart, windowEnd);
+
+    if (!FUNDING_WORDS.test(nearbyText)) continue;
+
+    let num = parseFloat(match[1].replace(/,/g, ''));
+    const unit = match[2].toLowerCase();
+    if (unit.startsWith('b')) num *= 1000;
+    return num; // amount in millions
+  }
+
+  return null;
 }
 
 async function runForSource(source) {
